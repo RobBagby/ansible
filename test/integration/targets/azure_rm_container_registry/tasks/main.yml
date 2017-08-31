@@ -1,0 +1,41 @@
+- name: Create storage account name
+  set_fact:
+    storage_account1: "{{ resource_group | hash('md5') | truncate(16, True, '') + (60000 | random | string) + "a" }}"
+    storage_account2: "{{ resource_group | hash('md5') | truncate(16, True, '') + (60000 | random | string) + "b" }}" 
+    container_registry: "{{ resource_group | hash('md5') | truncate(24, True, '') + (50000 | random | string) + "b" }}" 
+    
+- name: Create new storage account
+  azure_rm_storageaccount:
+    resource_group: "{{ resource_group }}" 
+    name: "{{ storage_account1 }}"
+    account_type: Standard_LRS
+  register: output
+
+- name: Create new storage account
+  azure_rm_storageaccount:
+    resource_group: "{{ resource_group }}" 
+    name: "{{ storage_account2 }}"
+    account_type: Standard_LRS
+  register: output
+
+- name: Create container registry
+  azure_rm_container_registry: 
+    admin_user_enabled: false
+    location: westus
+    name: "{{ container_registry }}"
+    resource_group: "{{ resource_group }}"
+    sku_name: Basic
+    state: present
+    storage_account_name: "{{ storage_account1 }}"
+    tags: 
+      tag2: val2a
+      tag3: val3
+  check_mode: false
+  register: results
+  ignore_errors: yes
+
+- name: Assert that container registry was created
+  assert:
+    that: 
+    - results.changed
+    - results.state.name == "{{ container_registry }}"

@@ -107,6 +107,7 @@ try:
     from azure.mgmt.compute import ComputeManagementClient
     from azure.mgmt.dns import DnsManagementClient
     from azure.mgmt.web import WebSiteManagementClient
+    from azure.mgmt.containerregistry import ContainerRegistryManagementClient
     from azure.mgmt.containerservice import ContainerServiceClient
     from azure.storage.cloudstorageaccount import CloudStorageAccount
 except ImportError as exc:
@@ -190,6 +191,7 @@ class AzureRMModuleBase(object):
         self._dns_client = None
         self._web_client = None
         self._containerservice_client = None
+        self._container_registry_client = None
 
         self.check_mode = self.module.check_mode
         self.facts_module = facts_module
@@ -755,3 +757,14 @@ class AzureRMModuleBase(object):
             )
             self._register('Microsoft.ContainerService')
         return self._containerservice_client
+
+    @property
+    def container_registry_client(self):
+        self.log('Getting container registry client')
+        if not self._container_registry_client:
+            self._container_registry_client = ContainerRegistryManagementClient(
+                self.azure_credentials,
+                self.subscription_id
+            )
+            self._register('Microsoft.ContainerRegistry')
+        return self._container_registry_client
